@@ -100,6 +100,9 @@ func (z *Big) scan(r io.ByteScanner) error {
 func scanSign(r io.ByteScanner) (bool, error) {
 	ch, err := r.ReadByte()
 	if err != nil {
+		if err == io.EOF {
+			return false, fmt.Errorf("decimal: cannot scan empty string")
+		}
 		return false, err
 	}
 	switch ch {
