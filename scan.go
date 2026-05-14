@@ -9,7 +9,7 @@ import (
 	"github.com/ericlagergren/decimal/internal/c"
 )
 
-func (z *Big) scan(r io.ByteScanner) error {
+func (z *Big) scan(r *byteScanner) error {
 	if debug {
 		defer func() { z.validate() }()
 	}
@@ -97,7 +97,7 @@ func (z *Big) scan(r io.ByteScanner) error {
 	return nil
 }
 
-func scanSign(r io.ByteScanner) (bool, error) {
+func scanSign(r *byteScanner) (bool, error) {
 	ch, err := r.ReadByte()
 	if err != nil {
 		return false, err
@@ -112,7 +112,7 @@ func scanSign(r io.ByteScanner) (bool, error) {
 	}
 }
 
-func (z *Big) scanForm(r io.ByteScanner) (form, error) {
+func (z *Big) scanForm(r *byteScanner) (form, error) {
 	ch, err := r.ReadByte()
 	if err != nil {
 		return 0, err
@@ -186,7 +186,7 @@ func (z *Big) scanForm(r io.ByteScanner) (form, error) {
 	return qnan, nil
 }
 
-func (z *Big) scanInfinity(r io.ByteScanner) (form, error) {
+func (z *Big) scanInfinity(r *byteScanner) (form, error) {
 	const (
 		s = "infinity"
 	)
@@ -208,7 +208,7 @@ func (z *Big) scanInfinity(r io.ByteScanner) (form, error) {
 	return inf, nil
 }
 
-func (z *Big) scanMant(r io.ByteScanner) (err error) {
+func (z *Big) scanMant(r *byteScanner) (err error) {
 	buf := make([]byte, 0, 20)
 	seenDot := false
 	dot := 0
@@ -282,7 +282,7 @@ Loop:
 	return nil
 }
 
-func (z *Big) scanExponent(r io.ByteScanner) error {
+func (z *Big) scanExponent(r *byteScanner) error {
 	ch, err := r.ReadByte()
 	if err != nil {
 		if err == io.EOF {
