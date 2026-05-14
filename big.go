@@ -1406,7 +1406,8 @@ func (x *Big) Scale() int {
 
 // Scan implements fmt.Scanner.
 func (z *Big) Scan(state fmt.ScanState, verb rune) error {
-	return z.scan(byteReader{state})
+	scanner := byteScanner{r: byteReader{state}}
+	return z.scan(&scanner)
 }
 
 // Set sets z to x and returns z.
@@ -1665,7 +1666,8 @@ var Regexp = regexp.MustCompile(`(?i)(([+-]?(\d+\.\d*|\.?\d+)([eE][+-]?\d+)?)|(i
 // SetString will only return (nil, false) if a library error
 // occurs. In general, it safe to ignore the bool result.
 func (z *Big) SetString(s string) (*Big, bool) {
-	if err := z.scan(strings.NewReader(s)); err != nil {
+	scanner := byteScanner{s: s}
+	if err := z.scan(&scanner); err != nil {
 		return nil, false
 	}
 	return z, true
@@ -1766,7 +1768,8 @@ func (z *Big) UnmarshalJSON(data []byte) error {
 
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (z *Big) UnmarshalText(data []byte) error {
-	return z.scan(bytes.NewReader(data))
+	scanner := byteScanner{b: data}
+	return z.scan(&scanner)
 }
 
 // validate ensures x's internal state is correct. There's no need for it to

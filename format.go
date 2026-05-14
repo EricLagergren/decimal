@@ -154,6 +154,18 @@ func (f *formatter) Write(p []byte) (n int, err error) {
 
 var sciE = [2]byte{GDA: 'E', Go: 'e'}
 
+func (f *formatter) writeZeros(n int) {
+	const zeros = "0000000000000000000000000000000000000000000000000000000000000000" // 64
+	for n > 0 {
+		chunk := n
+		if chunk > len(zeros) {
+			chunk = len(zeros)
+		}
+		f.WriteString(zeros[:chunk])
+		n -= chunk
+	}
+}
+
 func (f *formatter) format(x *Big, format format, e byte) {
 	if x == nil {
 		f.WriteString("<nil>")
@@ -186,7 +198,7 @@ func (f *formatter) format(x *Big, format format, e byte) {
 			f.WriteByte('0')
 		} else {
 			f.WriteString("0.")
-			io.CopyN(f, zeroReader{}, int64(f.width))
+			f.writeZeros(f.width)
 		}
 		return
 	}
@@ -237,7 +249,7 @@ func (f *formatter) format(x *Big, format format, e byte) {
 		// No decimal places, write b and fill with zeros.
 		if format == plain && exp > 0 {
 			f.Write(b)
-			io.CopyN(f, zeroReader{}, int64(exp))
+			f.writeZeros(exp)
 			return
 		}
 	}
@@ -282,7 +294,7 @@ func (f *formatter) formatPlain(b []byte, exp int) {
 	// log10(b) < scale, so before p "0s" and before b: 0.00000123456
 	default:
 		f.WriteString(zeroRadix)
-		io.CopyN(f, zeroReader{}, -int64(radix))
+		f.writeZeros(-radix)
 
 		end := len(b)
 		if f.prec < end {
