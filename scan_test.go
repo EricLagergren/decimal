@@ -52,8 +52,6 @@ func BenchmarkBig_SetString(b *testing.B) {
 	globOk = ok
 }
 
-
-
 func TestUnmarshalTextTwice(t *testing.T) {
 	x := &Big{}
 
@@ -64,6 +62,35 @@ func TestUnmarshalTextTwice(t *testing.T) {
 	}
 }
 
+func TestSetStringTruncatedNumeric(t *testing.T) {
+	for _, s := range []string{"1e", "1E", "1e+", "1e-", "-1e", "1.2e", "."} {
+		x, ok := new(Big).SetString(s)
+		if !ok {
+			t.Fatalf("%s: SetString returned false", s)
+		}
+		if !x.IsNaN(0) {
+			t.Fatalf("%s = %s, want NaN", s, x)
+		}
+		if x.Context.Conditions&ConversionSyntax == 0 {
+			t.Fatalf("%s: missing ConversionSyntax", s)
+		}
+	}
+
+	kept := []struct{ in, want string }{
+		{"1e2", "1E+2"},
+		{"1e+2", "1E+2"},
+		{"1e-1", "0.1"},
+		{"1.", "1"},
+		{".5", "0.5"},
+		{"10.00", "10.00"},
+	}
+	for _, tc := range kept {
+		x, ok := new(Big).SetString(tc.in)
+		if !ok || x.String() != tc.want {
+			t.Fatalf("%s = %s ok=%v, want %s", tc.in, x, ok, tc.want)
+		}
+	}
+}
 
 func TestSetStringTwice(t *testing.T) {
 	x := &Big{}
