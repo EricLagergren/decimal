@@ -268,6 +268,11 @@ Loop:
 		}
 	}
 
+	// A lone "." has no digits. The numeric grammar requires at least one.
+	if len(buf) == 0 {
+		return ConversionSyntax
+	}
+
 	if big || z.compact == c.Inflated {
 		z.unscaled.SetString(string(buf), 10)
 		z.compact = c.Inflated
@@ -300,6 +305,10 @@ func (z *Big) scanExponent(r io.ByteScanner) error {
 
 	ch, err = r.ReadByte()
 	if err != nil {
+		if err == io.EOF {
+			// "1e" has an exponent mark and no digits.
+			return ConversionSyntax
+		}
 		return err
 	}
 	var neg bool
@@ -318,6 +327,7 @@ func (z *Big) scanExponent(r io.ByteScanner) error {
 	}
 
 	var exp uint64
+	digits := 0
 	for {
 		ch, err := r.ReadByte()
 		if err != nil {
@@ -347,6 +357,12 @@ func (z *Big) scanExponent(r io.ByteScanner) error {
 			return Overflow
 		}
 		exp = v
+		digits++
+	}
+
+	// "1e+" and "1e-" have a sign and no digits.
+	if digits == 0 {
+		return ConversionSyntax
 	}
 
 	if neg {
