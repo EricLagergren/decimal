@@ -209,8 +209,11 @@ func (f *formatter) format(x *Big, format format, e byte) {
 			b = formatUnscaled(&x.unscaled)
 		}
 		orig := len(b)
-		b = roundString(b, x.Context.RoundingMode, !neg, f.prec)
-		exp = int(x.exp) + orig - len(b)
+		// A carry from 999 to 1000 adds a digit. That digit is a new leading
+		// place, so the scale stays tied to the requested precision.
+		req := f.prec
+		b = roundString(b, x.Context.RoundingMode, !neg, req)
+		exp = int(x.exp) + orig - req
 	} else if f.prec < 0 {
 		f.prec = -f.prec
 		exp = -f.prec
@@ -283,12 +286,8 @@ func (f *formatter) formatPlain(b []byte, exp int) {
 	default:
 		f.WriteString(zeroRadix)
 		io.CopyN(f, zeroReader{}, -int64(radix))
-
-		end := len(b)
-		if f.prec < end {
-			end = f.prec
-		}
-		f.Write(b[:end])
+		// Keep a carry digit. Dropping it shifts the value by a factor of ten.
+		f.Write(b)
 	}
 }
 
