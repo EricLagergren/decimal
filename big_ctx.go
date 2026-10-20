@@ -2496,6 +2496,7 @@ func (c Context) QuoRem(z, x, y, r *Big) (*Big, *Big) {
 
 	sign := (x.form & signbit) ^ (y.form & signbit)
 	if x.IsFinite() && y.IsFinite() {
+		exp := min(x.exp, y.exp)
 		if y.isZero() {
 			if x.isZero() {
 				// 0 / 0
@@ -2510,10 +2511,13 @@ func (c Context) QuoRem(z, x, y, r *Big) (*Big, *Big) {
 		if x.isZero() {
 			// 0 / y
 			z.setZero((x.form^y.form)&signbit, 0)
-			r.setZero(x.form, y.exp-x.exp)
+			r.setZero(x.form, exp)
 			return c.fix(z), c.fix(r)
 		}
-		return c.quorem(z, r, x, y)
+		z, r = c.quorem(z, r, x, y)
+		z.exp = 0
+		r.exp = exp
+		return z, r
 	}
 
 	// NaN / NaN
